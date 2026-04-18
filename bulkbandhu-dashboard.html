@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BulkBandhu — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --teal-900: #0a2e2e; --teal-800: #0d3b3b; --teal-700: #0f4c4c;
+      --teal-600: #146060; --teal-500: #1a7a7a; --teal-400: #22a3a3;
+      --teal-300: #4dc8c8; --teal-100: #d0f0f0; --teal-50: #e8f8f8;
+      --orange: #f97316; --orange-h: #ea6c0e; --orange-s: #fff3e8;
+      --white: #ffffff; --grey-50: #f8fafa; --grey-100: #f0f4f4;
+      --grey-200: #dde6e6; --grey-400: #9ab0b0; --grey-600: #5a7272;
+      --text-dark: #0d2020; --text-mid: #3d5555; --text-light: #6b8888;
+      --green-ok: #16a34a; --red-warn: #dc2626;
+      --shadow-md: 0 4px 12px rgba(10,46,46,.08), 0 2px 4px rgba(10,46,46,.04);
+      --shadow-lg: 0 10px 30px rgba(10,46,46,.10), 0 4px 8px rgba(10,46,46,.05);
+      --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px;
+      --nav-h: 68px; --sidebar-w: 300px;
+      --transition: all .22s cubic-bezier(.4,0,.2,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--grey-50); color: var(--text-dark); min-height: 100vh; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 5px; } ::-webkit-scrollbar-thumb { background: var(--teal-300); border-radius: 10px; }
+
+    /* ── AUTH OVERLAY ── */
+    #auth-overlay {
+      position: fixed; inset: 0; z-index: 9999;
+      background: var(--teal-900);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .auth-box {
+      background: white; border-radius: var(--radius-lg);
+      padding: 40px; width: 100%; max-width: 400px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+    }
+    .auth-logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
+    .auth-logo-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      background: linear-gradient(135deg, var(--teal-400), var(--teal-300));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; color: white;
+    }
+    .auth-logo-name { font-family: 'Sora', sans-serif; font-size: 24px; font-weight: 800; color: var(--teal-900); }
+    .auth-logo-name span { color: var(--orange); }
+    .auth-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 2px solid var(--grey-200); }
+    .auth-tab {
+      flex: 1; padding: 10px; text-align: center;
+      font-size: 14px; font-weight: 600; color: var(--text-light);
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px;
+      transition: var(--transition);
+    }
+    .auth-tab.active { color: var(--teal-600); border-bottom-color: var(--teal-500); }
+    .auth-form { display: flex; flex-direction: column; gap: 14px; }
+    .auth-input {
+      padding: 12px 14px; border: 1.5px solid var(--grey-200);
+      border-radius: var(--radius-sm); font-size: 14px; font-family: 'DM Sans', sans-serif;
+      transition: var(--transition); outline: none;
+    }
+    .auth-input:focus { border-color: var(--teal-400); box-shadow: 0 0 0 3px rgba(34,163,163,.1); }
+    .auth-btn {
+      padding: 13px; background: var(--teal-600); color: white;
+      border: none; border-radius: var(--radius-sm);
+      font-size: 14px; font-weight: 700; font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: var(--transition);
+    }
+    .auth-btn:hover { background: var(--teal-500); }
+    .auth-btn:disabled { opacity: .6; cursor: not-allowed; }
+    .auth-error { color: var(--red-warn); font-size: 12px; padding: 8px 12px; background: #fee2e2; border-radius: var(--radius-sm); display: none; }
+    .auth-error.show { display: block; }
+
+    /* ── NAVBAR ── */
+    .navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      height: var(--nav-h); background: var(--teal-900);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; box-shadow: 0 2px 20px rgba(10,46,46,.35);
+    }
+    .nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+    .nav-logo-icon {
+      width: 42px; height: 42px; background: linear-gradient(135deg, var(--teal-400), var(--teal-300));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; color: white;
+    }
+    .nav-logo-name { font-family: 'Sora', sans-serif; font-size: 20px; font-weight: 800; color: white; line-height: 1; }
+    .nav-logo-name span { color: var(--orange); }
+    .nav-tagline { font-size: 10.5px; color: var(--teal-300); letter-spacing: .8px; text-transform: uppercase; margin-top: 3px; }
+    .nav-links { display: flex; align-items: center; gap: 4px; }
+    .nav-link {
+      display: flex; align-items: center; gap: 7px; padding: 8px 14px;
+      border-radius: var(--radius-sm); color: rgba(255,255,255,.65);
+      font-size: 13.5px; font-weight: 500; text-decoration: none;
+      transition: var(--transition); border: none; background: none; cursor: pointer;
+    }
+    .nav-link:hover, .nav-link.active { color: white; background: rgba(255,255,255,.09); }
+    .nav-link.active { color: var(--teal-300); }
+    .nav-divider { width: 1px; height: 24px; background: rgba(255,255,255,.12); margin: 0 8px; }
+    .btn-logout {
+      display: flex; align-items: center; gap: 7px; padding: 8px 16px;
+      background: rgba(249,115,22,.15); border: 1px solid rgba(249,115,22,.35);
+      border-radius: var(--radius-sm); color: var(--orange);
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: var(--transition);
+    }
+    .btn-logout:hover { background: rgba(249,115,22,.25); }
+    .nav-avatar {
+      width: 34px; height: 34px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--teal-400), var(--teal-600));
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 13px; font-weight: 700;
+      border: 2px solid rgba(255,255,255,.2); margin-left: 6px; cursor: pointer;
+    }
+    .hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 4px; }
+    .hamburger span { display: block; width: 22px; height: 2px; background: white; border-radius: 2px; }
+
+    /* ── PAGE ── */
+    .page-wrap { margin-top: var(--nav-h); padding: 24px 24px 40px; max-width: 1580px; margin-left: auto; margin-right: auto; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+    .page-header-left h1 { font-family: 'Sora', sans-serif; font-size: 22px; font-weight: 700; color: var(--text-dark); }
+    .page-header-left p { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+    .page-header-right { display: flex; align-items: center; gap: 10px; }
+    .badge-live {
+      display: flex; align-items: center; gap: 6px; padding: 6px 12px;
+      background: var(--teal-50); border: 1px solid var(--teal-300); border-radius: 20px;
+      font-size: 12px; font-weight: 600; color: var(--teal-600);
+    }
+    .badge-live::before { content: ''; width: 7px; height: 7px; background: var(--teal-400); border-radius: 50%; animation: pulse-dot 1.8s infinite; }
+    @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 0 rgba(34,163,163,.5); } 50% { box-shadow: 0 0 0 5px rgba(34,163,163,0); } }
+    .btn-refresh {
+      display: flex; align-items: center; gap: 7px; padding: 8px 16px;
+      background: white; border: 1px solid var(--grey-200); border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 500; color: var(--text-mid); cursor: pointer; transition: var(--transition);
+    }
+    .btn-refresh:hover { background: var(--grey-100); }
+    .btn-refresh i { transition: transform .5s ease; }
+    .btn-refresh:hover i { transform: rotate(180deg); }
+
+    /* ── GRID ── */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr var(--sidebar-w);
+      grid-template-rows: auto auto;
+      gap: 20px;
+    }
+    .card {
+      background: var(--white); border-radius: var(--radius-lg);
+      border: 1px solid var(--grey-200); box-shadow: var(--shadow-md);
+      overflow: hidden; transition: box-shadow .25s ease;
+      animation: fadeUp .5s ease forwards; opacity: 0;
+    }
+    .card:hover { box-shadow: var(--shadow-lg); }
+    .card:nth-child(1){animation-delay:.05s} .card:nth-child(2){animation-delay:.12s}
+    .card:nth-child(3){animation-delay:.19s} .card:nth-child(4){animation-delay:.26s}
+    @keyframes fadeUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+
+    .card-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 0; }
+    .card-title-group { display: flex; align-items: center; gap: 10px; }
+    .card-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 15px; }
+    .icon-teal{background:var(--teal-50);color:var(--teal-500)} .icon-orange{background:var(--orange-s);color:var(--orange)}
+    .icon-green{background:#f0fdf4;color:var(--green-ok)} .icon-purple{background:#f5f3ff;color:#7c3aed} .icon-blue{background:#eff6ff;color:#2563eb}
+    .card-title { font-family: 'Sora', sans-serif; font-size: 14px; font-weight: 700; color: var(--text-dark); }
+    .card-subtitle { font-size: 11.5px; color: var(--text-light); margin-top: 2px; }
+    .card-badge { font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 20px; }
+    .badge-teal{background:var(--teal-50);color:var(--teal-600);border:1px solid var(--teal-100)}
+    .badge-orange{background:var(--orange-s);color:var(--orange);border:1px solid #fcd9b5}
+
+    /* ── LOGISTICS CARD ── */
+    .card-logistics { grid-column: 1; grid-row: 1; }
+    .map-container {
+      margin: 16px 20px 20px; position: relative; height: 330px;
+      border-radius: var(--radius-md); overflow: hidden;
+      background: linear-gradient(160deg, #e8f5f5 0%, #d0eeee 40%, #e0f0ef 100%);
+      border: 1px solid var(--grey-200);
+    }
+    .map-container::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(26,122,122,.08) 1px, transparent 1px), linear-gradient(90deg, rgba(26,122,122,.08) 1px, transparent 1px);
+      background-size: 30px 30px;
+    }
+    .map-svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+    .map-node { position: absolute; display: flex; flex-direction: column; align-items: center; z-index: 2; }
+    .map-node-dot {
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      color: white; box-shadow: 0 3px 10px rgba(0,0,0,.2);
+      animation: node-glow 2.5s ease-in-out infinite;
+    }
+    @keyframes node-glow { 0%,100%{box-shadow:0 3px 10px rgba(0,0,0,.15)} 50%{box-shadow:0 3px 18px rgba(26,122,122,.4)} }
+    .map-node-dot.factory{width:52px;height:52px;background:linear-gradient(135deg,var(--teal-700),var(--teal-500));font-size:22px}
+    .map-node-dot.hub{width:42px;height:42px;background:linear-gradient(135deg,var(--orange-h),var(--orange));font-size:18px}
+    .map-node-dot.buyer{width:32px;height:32px;background:linear-gradient(135deg,#2563eb,#3b82f6);font-size:13px}
+    .map-node-label { margin-top:7px;font-size:11px;font-weight:600;color:var(--text-dark);white-space:nowrap;background:rgba(255,255,255,.9);padding:3px 8px;border-radius:20px;border:1px solid var(--grey-200); }
+    .map-node-sub { font-size:9.5px;color:var(--text-light);margin-top:2px; }
+    .truck-dot {
+      position:absolute;width:22px;height:22px;background:white;border-radius:50%;
+      display:flex;align-items:center;justify-content:center;font-size:11px;
+      border:2px solid var(--orange);box-shadow:0 2px 8px rgba(249,115,22,.4);
+      z-index:5;animation:truck-move 6s ease-in-out infinite;
+    }
+    @keyframes truck-move{0%{left:70px;top:145px}40%{left:240px;top:105px}70%{left:360px;top:90px}100%{left:70px;top:145px}}
+    .map-legend{position:absolute;bottom:12px;right:12px;background:rgba(255,255,255,.92);border:1px solid var(--grey-200);border-radius:var(--radius-sm);padding:10px 14px;font-size:11px;}
+    .map-legend-item{display:flex;align-items:center;gap:7px;margin-bottom:5px;color:var(--text-mid)}
+    .map-legend-item:last-child{margin-bottom:0}
+    .legend-dot{width:10px;height:10px;border-radius:50%} .legend-line{width:18px;height:3px;border-radius:2px}
+    .logistics-stats{display:flex;gap:0;border-top:1px solid var(--grey-100)}
+    .logistics-stat{flex:1;padding:14px 18px;border-right:1px solid var(--grey-100)}
+    .logistics-stat:last-child{border-right:none}
+    .logistics-stat-val{font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:var(--teal-600)}
+    .logistics-stat-val span{font-size:12px;font-weight:500;color:var(--text-light)}
+    .logistics-stat-label{font-size:11px;color:var(--text-light);margin-top:2px}
+
+    /* ── POOLS CARD ── */
+    .card-pools{grid-column:2;grid-row:1}
+    .pools-list{padding:14px 20px 20px;display:flex;flex-direction:column;gap:14px}
+    .pool-card{background:var(--grey-50);border:1px solid var(--grey-200);border-radius:var(--radius-md);padding:16px;transition:var(--transition);position:relative;overflow:hidden}
+    .pool-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+    .pool-card.steel::before{background:linear-gradient(180deg,#64748b,#94a3b8)}
+    .pool-card.cement::before{background:linear-gradient(180deg,var(--orange),#fbbf24)}
+    .pool-card.pipes::before{background:linear-gradient(180deg,var(--teal-400),var(--teal-300))}
+    .pool-card:hover{background:white;border-color:var(--teal-300);box-shadow:0 4px 16px rgba(34,163,163,.1);transform:translateY(-1px)}
+    .pool-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+    .pool-company{display:flex;align-items:center;gap:10px}
+    .pool-logo{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:white;flex-shrink:0}
+    .logo-jsw{background:linear-gradient(135deg,#1e3a5f,#2563eb)} .logo-ultra{background:linear-gradient(135deg,#92400e,var(--orange))} .logo-tata{background:linear-gradient(135deg,var(--teal-700),var(--teal-500))}
+    .pool-company-name{font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:var(--text-dark)}
+    .pool-company-meta{font-size:11.5px;color:var(--text-light);margin-top:2px}
+    .pool-urgency{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:12px}
+    .urgency-high{background:#fee2e2;color:var(--red-warn)} .urgency-med{background:#fef3c7;color:#92400e} .urgency-low{background:var(--teal-50);color:var(--teal-600)}
+    .pool-progress-label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-light);margin-bottom:7px}
+    .pool-progress-label strong{color:var(--text-dark)}
+    .pool-progress-track{height:10px;background:var(--grey-200);border-radius:10px;overflow:hidden;margin-bottom:12px}
+    .pool-progress-fill{height:100%;border-radius:10px;position:relative;transition:width 1.2s cubic-bezier(.4,0,.2,1)}
+    .pool-progress-fill::after{content:'';position:absolute;right:0;top:50%;transform:translateY(-50%);width:14px;height:14px;background:white;border-radius:50%;border:3px solid currentColor}
+    .fill-jsw{background:linear-gradient(90deg,#2563eb,#60a5fa);color:#2563eb}
+    .fill-ultra{background:linear-gradient(90deg,var(--orange-h),#fbbf24);color:var(--orange-h)}
+    .fill-tata{background:linear-gradient(90deg,var(--teal-600),var(--teal-300));color:var(--teal-600)}
+    .pool-footer{display:flex;align-items:center;justify-content:space-between}
+    .pool-avatars{display:flex;align-items:center}
+    .pool-avatar{width:26px;height:26px;border-radius:50%;border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;color:white;margin-left:-8px}
+    .pool-avatar:first-child{margin-left:0}
+    .av1{background:#7c3aed} .av2{background:#059669} .av3{background:#dc2626} .av4{background:#d97706} .av5{background:#0891b2} .av-more{background:var(--grey-400);font-size:9px}
+    .pool-member-count{font-size:11px;color:var(--text-light);margin-left:10px}
+    .btn-join{padding:8px 18px;background:var(--orange);color:white;font-size:12.5px;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:var(--transition);display:flex;align-items:center;gap:6px}
+    .btn-join:hover{background:var(--orange-h);transform:scale(1.04)}
+    .btn-join.joined{background:var(--green-ok);pointer-events:none}
+    .btn-join:disabled{opacity:.6;cursor:not-allowed}
+    .pool-timer{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--red-warn);font-weight:600}
+
+    /* ── DEMAND CHART ── */
+    .card-demand{grid-column:1;grid-row:2}
+    .chart-wrap{padding:10px 20px 20px}
+    .chart-canvas-wrap{height:240px;position:relative}
+    .chart-controls{display:flex;align-items:center;gap:6px}
+    .chart-pill{padding:5px 12px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;transition:var(--transition);border:1.5px solid transparent}
+    .chart-pill.active{background:var(--teal-50);border-color:var(--teal-300);color:var(--teal-600)}
+    .chart-pill:not(.active){background:white;border-color:var(--grey-200);color:var(--text-light)}
+    .chart-legend{display:flex;align-items:center;gap:16px;margin:10px 0 6px}
+    .legend-item{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-mid)}
+    .legend-swatch{width:20px;height:3px;border-radius:2px}
+    .buy-window-tag{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:12px;background:#f0fdf4;border:1px solid #bbf7d0;font-size:11px;font-weight:600;color:var(--green-ok);margin-left:auto}
+
+    /* ── INSIGHTS ── */
+    .card-insights{grid-column:2;grid-row:2}
+    .insights-grid{padding:14px 20px 20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .insight-tile{background:var(--grey-50);border:1px solid var(--grey-100);border-radius:var(--radius-md);padding:14px}
+    .insight-val{font-family:'Sora',sans-serif;font-size:22px;font-weight:800;color:var(--text-dark)}
+    .insight-label{font-size:11px;color:var(--text-light);margin-top:3px}
+    .insight-delta{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;margin-top:6px;padding:2px 7px;border-radius:8px}
+    .delta-up{background:#dcfce7;color:var(--green-ok)} .delta-down{background:#fee2e2;color:var(--red-warn)}
+    .alert-banner{margin:0 20px 16px;padding:12px 16px;background:linear-gradient(135deg,#fffbeb,#fff3e8);border:1px solid #fcd9b5;border-radius:var(--radius-sm);display:flex;align-items:flex-start;gap:10px}
+    .alert-banner i{color:var(--orange);margin-top:1px}
+    .alert-banner p{font-size:12px;color:#7c4a1e;line-height:1.5}
+
+    /* ── SIDEBAR ── */
+    .sidebar{grid-column:3;grid-row:1/3;display:flex;flex-direction:column;gap:16px}
+    .stat-card{background:white;border:1px solid var(--grey-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-md);padding:20px;transition:box-shadow .25s ease;animation:fadeUp .5s ease forwards;opacity:0}
+    .stat-card:hover{box-shadow:var(--shadow-lg)}
+    .stat-card:nth-child(1){animation-delay:.10s} .stat-card:nth-child(2){animation-delay:.17s}
+    .stat-card:nth-child(3){animation-delay:.24s} .stat-card:nth-child(4){animation-delay:.31s}
+    .stat-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .stat-card-title{font-size:12px;font-weight:600;color:var(--text-light);text-transform:uppercase;letter-spacing:.7px}
+    .commitments-display{display:flex;align-items:flex-end;gap:10px}
+    .commitments-number{font-family:'Sora',sans-serif;font-size:64px;font-weight:800;color:var(--teal-600);line-height:1}
+    .commitments-meta{padding-bottom:8px}
+    .commitments-meta p{font-size:12px;color:var(--text-light);margin-bottom:4px}
+    .commitment-list{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+    .commitment-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:var(--grey-50);border-radius:var(--radius-sm);border:1px solid var(--grey-100)}
+    .commitment-name{font-size:12.5px;font-weight:600;color:var(--text-dark)}
+    .commitment-type{font-size:11px;color:var(--text-light)}
+    .commitment-status{font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:8px}
+    .status-active{background:#dcfce7;color:#15803d} .status-pending{background:#fef3c7;color:#92400e}
+    .savings-amount{font-family:'Sora',sans-serif;font-size:32px;font-weight:800;color:var(--text-dark);margin-bottom:4px}
+    .savings-amount span{font-size:18px;color:var(--green-ok)}
+    .savings-delta{font-size:12px;color:var(--green-ok);font-weight:600;margin-bottom:16px}
+    .mini-bar-chart{display:flex;align-items:flex-end;gap:5px;height:60px}
+    .mini-bar-group{display:flex;flex-direction:column;align-items:center;gap:4px;flex:1}
+    .mini-bar{width:100%;border-radius:4px 4px 0 0}
+    .bar-market{background:var(--grey-200)} .bar-bulk{background:linear-gradient(180deg,var(--teal-400),var(--teal-600))}
+    .mini-bar-label{font-size:9px;color:var(--text-light);text-align:center;white-space:nowrap}
+    .mini-bar-legend{display:flex;align-items:center;gap:12px;margin-top:10px}
+    .mini-legend-item{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--text-light)}
+    .mini-legend-swatch{width:10px;height:10px;border-radius:2px}
+    .quality-display{text-align:center;padding:6px 0 10px}
+    .quality-check-icon{width:64px;height:64px;margin:0 auto 12px;background:#f0fdf4;border:2px solid #bbf7d0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;color:var(--green-ok)}
+    .quality-number{font-family:'Sora',sans-serif;font-size:36px;font-weight:800;color:var(--green-ok)}
+    .quality-label{font-size:12px;color:var(--text-light);margin-top:4px}
+    .quality-list{margin-top:14px;display:flex;flex-direction:column;gap:7px}
+    .quality-item{display:flex;align-items:center;gap:9px;padding:9px 12px;background:var(--grey-50);border-radius:var(--radius-sm);border:1px solid var(--grey-100)}
+    .quality-item i{font-size:13px;color:var(--green-ok)}
+    .quality-item-text{font-size:12px;font-weight:500;color:var(--text-dark)}
+    .quality-item-sub{font-size:10.5px;color:var(--text-light)}
+    .quick-actions{display:flex;flex-direction:column;gap:8px}
+    .quick-action-btn{display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:var(--radius-sm);border:1.5px solid var(--grey-200);background:white;cursor:pointer;transition:var(--transition);text-align:left;width:100%}
+    .quick-action-btn:hover{border-color:var(--teal-300);background:var(--teal-50)}
+    .qa-icon-wrap{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+    .qa-text{font-size:12.5px;font-weight:600;color:var(--text-dark)} .qa-sub{font-size:10.5px;color:var(--text-light);margin-top:1px}
+    .quick-action-btn .fa-chevron-right{margin-left:auto;font-size:11px;color:var(--grey-400)}
+
+    /* ── TOAST ── */
+    .toast{position:fixed;bottom:24px;right:24px;background:var(--teal-900);color:white;padding:14px 18px;border-radius:var(--radius-md);box-shadow:0 10px 30px rgba(10,46,46,.35);display:flex;align-items:center;gap:12px;font-size:13px;z-index:9998;transform:translateY(80px);opacity:0;transition:all .4s cubic-bezier(.4,0,.2,1);max-width:320px}
+    .toast.show{transform:translateY(0);opacity:1}
+    .toast i{font-size:16px;color:var(--teal-300);flex-shrink:0}
+    .toast-close{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:14px;padding:0 4px}
+
+    /* ── API STATUS BAR ── */
+    .api-status{display:flex;align-items:center;gap:6px;padding:4px 10px;border-radius:12px;font-size:11px;font-weight:600}
+    .api-status.online{background:#dcfce7;color:#15803d}
+    .api-status.offline{background:#fee2e2;color:var(--red-warn)}
+    .api-status-dot{width:6px;height:6px;border-radius:50%}
+    .api-status.online .api-status-dot{background:#15803d}
+    .api-status.offline .api-status-dot{background:var(--red-warn)}
+
+    /* ── MOBILE ── */
+    .mobile-nav{display:none;position:fixed;top:var(--nav-h);right:0;bottom:0;width:260px;background:var(--teal-900);z-index:99;padding:20px;flex-direction:column;gap:6px;box-shadow:-5px 0 20px rgba(0,0,0,.3);transform:translateX(100%);transition:transform .3s ease}
+    .mobile-nav.open{transform:translateX(0)}
+    @media(max-width:1100px){.dashboard-grid{grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto}.sidebar{grid-column:1/3;grid-row:3;display:grid;grid-template-columns:repeat(2,1fr);gap:16px}.card-insights{grid-column:2;grid-row:2}}
+    @media(max-width:780px){.page-wrap{padding:16px 14px 40px}.dashboard-grid{grid-template-columns:1fr}.sidebar{grid-column:1;grid-template-columns:1fr}.nav-links{display:none}.hamburger{display:flex}.mobile-nav{display:flex}}
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     AUTH OVERLAY
+═══════════════════════════════════════ -->
+<div id="auth-overlay">
+  <div class="auth-box">
+    <div class="auth-logo">
+      <div class="auth-logo-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+      <div>
+        <div class="auth-logo-name">Bulk<span>Bandhu</span></div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px;">Source Same, Price Game</div>
+      </div>
+    </div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Login</div>
+      <div class="auth-tab" onclick="switchTab('register')">Register</div>
+    </div>
+    <div id="auth-error" class="auth-error"></div>
+
+    <!-- Login Form -->
+    <div id="login-form" class="auth-form">
+      <input class="auth-input" type="email" id="login-email" placeholder="Email address" />
+      <input class="auth-input" type="password" id="login-password" placeholder="Password" />
+      <button class="auth-btn" onclick="doLogin()"><i class="fa-solid fa-right-to-bracket"></i> Login</button>
+      <div style="text-align:center;font-size:12px;color:var(--text-light);">
+        Demo: use any email + password to register first
+      </div>
+    </div>
+
+    <!-- Register Form -->
+    <div id="register-form" class="auth-form" style="display:none">
+      <input class="auth-input" type="text" id="reg-name" placeholder="Display name" />
+      <input class="auth-input" type="email" id="reg-email" placeholder="Email address" />
+      <input class="auth-input" type="password" id="reg-password" placeholder="Password (min 6 chars)" />
+      <button class="auth-btn" onclick="doRegister()"><i class="fa-solid fa-user-plus"></i> Create Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════
+     NAVBAR
+═══════════════════════════════════════ -->
+<nav class="navbar">
+  <a href="#" class="nav-brand">
+    <div class="nav-logo-icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+    <div>
+      <div class="nav-logo-name">Bulk<span>Bandhu</span></div>
+      <div class="nav-tagline">Source Same, Price Game</div>
+    </div>
+  </a>
+  <div class="nav-links">
+    <a href="#" class="nav-link active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+    <a href="#" class="nav-link"><i class="fa-solid fa-layer-group"></i> My Pools</a>
+    <a href="#" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a>
+    <a href="#" class="nav-link"><i class="fa-solid fa-bell"></i> Alerts <span style="background:var(--orange);color:white;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:2px;">3</span></a>
+    <div class="nav-divider"></div>
+    <div id="api-status-badge" class="api-status offline"><div class="api-status-dot"></div> API Offline</div>
+    <div class="nav-divider"></div>
+    <button class="btn-logout" onclick="doLogout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+    <div class="nav-avatar" id="nav-avatar">?</div>
+  </div>
+  <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+</nav>
+
+<div class="mobile-nav" id="mobileNav">
+  <a href="#" class="nav-link active"><i class="fa-solid fa-gauge-high"></i> Dashboard</a>
+  <a href="#" class="nav-link"><i class="fa-solid fa-layer-group"></i> My Pools</a>
+  <button class="btn-logout" onclick="doLogout()" style="margin-top:12px"><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+</div>
+
+<!-- ═══════════════════════════════════════
+     PAGE
+═══════════════════════════════════════ -->
+<div class="page-wrap">
+  <div class="page-header">
+    <div class="page-header-left">
+      <h1><i class="fa-solid fa-gauge-high" style="color:var(--teal-400);margin-right:8px;font-size:18px;"></i>Buyer Dashboard</h1>
+      <p id="welcome-msg">Welcome back · Loading...</p>
+    </div>
+    <div class="page-header-right">
+      <span class="badge-live">Live Market</span>
+      <button class="btn-refresh" id="refreshBtn"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+
+    <!-- CARD 1: Logistics -->
+    <div class="card card-logistics">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-icon icon-teal"><i class="fa-solid fa-route"></i></div>
+          <div><div class="card-title">Logistics Optimizer</div><div class="card-subtitle">Milk-Run Route · NCR Cluster</div></div>
+        </div>
+        <span class="card-badge badge-teal"><i class="fa-solid fa-truck-fast" style="margin-right:4px;"></i>Active Delivery</span>
+      </div>
+      <div style="padding:14px 20px 0;">
+        <div class="map-container">
+          <svg class="map-svg" viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+            <path d="M 90 155 Q 180 80 255 120" stroke="#1a7a7a" stroke-width="4" fill="none" stroke-dasharray="10 5" stroke-linecap="round" opacity=".7"/>
+            <path d="M 275 118 Q 330 70 390 90" stroke="var(--orange)" stroke-width="3.5" fill="none" stroke-dasharray="8 4" stroke-linecap="round" opacity=".8"/>
+            <path d="M 275 128 Q 340 150 400 170" stroke="var(--orange)" stroke-width="3.5" fill="none" stroke-dasharray="8 4" stroke-linecap="round" opacity=".8"/>
+            <path d="M 268 132 Q 310 200 370 230" stroke="var(--orange)" stroke-width="3.5" fill="none" stroke-dasharray="8 4" stroke-linecap="round" opacity=".8"/>
+            <text x="155" y="90" font-size="10" fill="#1a7a7a" font-family="DM Sans,sans-serif" font-weight="600">42 km</text>
+          </svg>
+          <div class="map-node" style="left:44px;top:115px;"><div class="map-node-dot factory"><i class="fa-solid fa-industry"></i></div><div class="map-node-label">JSW Factory</div><div class="map-node-sub">Neemrana, RJ</div></div>
+          <div class="map-node" style="left:237px;top:78px;"><div class="map-node-dot hub"><i class="fa-solid fa-warehouse"></i></div><div class="map-node-label">Micro-Hub</div><div class="map-node-sub">Manesar, HR</div></div>
+          <div class="map-node" style="left:376px;top:60px;"><div class="map-node-dot buyer"><i class="fa-solid fa-store"></i></div><div class="map-node-label">Sec 62</div><div class="map-node-sub">8 Shops</div></div>
+          <div class="map-node" style="left:408px;top:148px;"><div class="map-node-dot buyer"><i class="fa-solid fa-store"></i></div><div class="map-node-label">Sec 13</div><div class="map-node-sub">5 Shops</div></div>
+          <div class="map-node" style="left:370px;top:218px;"><div class="map-node-dot buyer"><i class="fa-solid fa-store"></i></div><div class="map-node-label">Sec 45</div><div class="map-node-sub">6 Shops</div></div>
+          <div class="truck-dot"><i class="fa-solid fa-truck"></i></div>
+          <div class="map-legend">
+            <div class="map-legend-item"><div class="legend-dot" style="background:var(--teal-500);"></div> Factory</div>
+            <div class="map-legend-item"><div class="legend-dot" style="background:var(--orange);"></div> Micro-Hub</div>
+            <div class="map-legend-item"><div class="legend-dot" style="background:#2563eb;"></div> Buyer Cluster</div>
+          </div>
+        </div>
+      </div>
+      <div class="logistics-stats">
+        <div class="logistics-stat"><div class="logistics-stat-val">3 <span>routes</span></div><div class="logistics-stat-label">Active Deliveries</div></div>
+        <div class="logistics-stat"><div class="logistics-stat-val">₹2.4L <span>saved</span></div><div class="logistics-stat-label">Logistics Savings</div></div>
+        <div class="logistics-stat"><div class="logistics-stat-val">18% <span>less CO₂</span></div><div class="logistics-stat-label">Carbon Reduction</div></div>
+        <div class="logistics-stat"><div class="logistics-stat-val">19 <span>shops</span></div><div class="logistics-stat-label">In This Run</div></div>
+      </div>
+    </div>
+
+    <!-- CARD 2: Pool Matcher -->
+    <div class="card card-pools">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-icon icon-orange"><i class="fa-solid fa-people-group"></i></div>
+          <div><div class="card-title">Real-Time Pool Matcher</div><div class="card-subtitle">Active group-buying pools near you</div></div>
+        </div>
+        <span class="card-badge badge-orange">3 Open</span>
+      </div>
+      <div class="pools-list">
+
+        <!-- Pool 1 -->
+        <div class="pool-card steel" id="pool-jsw">
+          <div class="pool-card-header">
+            <div class="pool-company">
+              <div class="pool-logo logo-jsw">JSW</div>
+              <div><div class="pool-company-name">JSW Steel — FE500D</div><div class="pool-company-meta"><i class="fa-solid fa-location-dot" style="margin-right:4px;"></i>Neemrana Plant · TMT Bars · Min. Lot 200T</div></div>
+            </div>
+            <span class="pool-urgency urgency-high"><i class="fa-solid fa-fire" style="margin-right:3px;"></i>Closing Soon</span>
+          </div>
+          <div class="pool-progress-label"><span>Current: <strong>780 Tons</strong></span><span>Target: <strong>1,000 Tons</strong> · <strong style="color:var(--teal-600);">78% Full</strong></span></div>
+          <div class="pool-progress-track"><div class="pool-progress-fill fill-jsw" style="width:78%;"></div></div>
+          <div class="pool-footer">
+            <div>
+              <div class="pool-avatars"><div class="pool-avatar av1">RS</div><div class="pool-avatar av2">MK</div><div class="pool-avatar av3">PD</div><div class="pool-avatar av-more">+36</div></div>
+              <div class="pool-member-count"><i class="fa-solid fa-users" style="margin-right:4px;"></i>39 shopkeepers in pool</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <div class="pool-timer"><i class="fa-regular fa-clock"></i> Closes in 4h 22m</div>
+              <button class="btn-join" id="btn-jsw" onclick="joinPool(this,'jsw','JSW Steel FE500D')"><i class="fa-solid fa-plus"></i> Join Pool</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pool 2 -->
+        <div class="pool-card cement" id="pool-ultra">
+          <div class="pool-card-header">
+            <div class="pool-company">
+              <div class="pool-logo logo-ultra">ULC</div>
+              <div><div class="pool-company-name">Ultratech Cement</div><div class="pool-company-meta"><i class="fa-solid fa-location-dot" style="margin-right:4px;"></i>Dadri Plant · OPC 53 Grade · Min. Lot 50T</div></div>
+            </div>
+            <span class="pool-urgency urgency-med">Filling Up</span>
+          </div>
+          <div class="pool-progress-label"><span>Current: <strong>310 Tons</strong></span><span>Target: <strong>500 Tons</strong> · <strong style="color:var(--orange);">62% Full</strong></span></div>
+          <div class="pool-progress-track"><div class="pool-progress-fill fill-ultra" style="width:62%;"></div></div>
+          <div class="pool-footer">
+            <div>
+              <div class="pool-avatars"><div class="pool-avatar av2">SK</div><div class="pool-avatar av5">RP</div><div class="pool-avatar av-more">+22</div></div>
+              <div class="pool-member-count"><i class="fa-solid fa-users" style="margin-right:4px;"></i>24 shopkeepers in pool</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <div class="pool-timer" style="color:var(--teal-500);"><i class="fa-regular fa-clock"></i> Closes in 2d 10h</div>
+              <button class="btn-join" id="btn-ultra" onclick="joinPool(this,'ultra','Ultratech Cement')"><i class="fa-solid fa-plus"></i> Join Pool</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pool 3 -->
+        <div class="pool-card pipes" id="pool-tata">
+          <div class="pool-card-header">
+            <div class="pool-company">
+              <div class="pool-logo logo-tata">TTS</div>
+              <div><div class="pool-company-name">TATA Structura Pipes</div><div class="pool-company-meta"><i class="fa-solid fa-location-dot" style="margin-right:4px;"></i>Jamshedpur · Hollow Sections · Min. Lot 30T</div></div>
+            </div>
+            <span class="pool-urgency urgency-low">New</span>
+          </div>
+          <div class="pool-progress-label"><span>Current: <strong>55 Tons</strong></span><span>Target: <strong>200 Tons</strong> · <strong style="color:var(--teal-600);">28% Full</strong></span></div>
+          <div class="pool-progress-track"><div class="pool-progress-fill fill-tata" style="width:28%;"></div></div>
+          <div class="pool-footer">
+            <div>
+              <div class="pool-avatars"><div class="pool-avatar av1">VJ</div><div class="pool-avatar av4">BS</div><div class="pool-avatar av-more">+7</div></div>
+              <div class="pool-member-count"><i class="fa-solid fa-users" style="margin-right:4px;"></i>9 shopkeepers in pool</div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;">
+              <div class="pool-timer" style="color:var(--teal-500);"><i class="fa-regular fa-clock"></i> Open for 5 days</div>
+              <button class="btn-join" id="btn-tata" onclick="joinPool(this,'tata','TATA Structura Pipes')"><i class="fa-solid fa-plus"></i> Join Pool</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- CARD 3: Demand Chart -->
+    <div class="card card-demand">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-icon icon-purple"><i class="fa-solid fa-chart-area"></i></div>
+          <div><div class="card-title">Predictive Demand Intelligence</div><div class="card-subtitle">Steel FE500D · ₹/MT market price vs AI forecast</div></div>
+        </div>
+        <div class="chart-controls">
+          <span class="chart-pill active" onclick="switchChart(this,'3m')">3M</span>
+          <span class="chart-pill" onclick="switchChart(this,'6m')">6M</span>
+          <span class="chart-pill" onclick="switchChart(this,'1y')">1Y</span>
+        </div>
+      </div>
+      <div class="chart-wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-swatch" style="background:#6366f1;"></div> Market Price</div>
+            <div class="legend-item"><div class="legend-swatch" style="background:var(--teal-400);"></div> AI Forecast</div>
+          </div>
+          <div class="buy-window-tag"><i class="fa-solid fa-bullseye"></i> BUY NOW window active</div>
+        </div>
+        <div class="chart-canvas-wrap"><canvas id="demandChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- CARD 4: Market Pulse -->
+    <div class="card card-insights">
+      <div class="card-header">
+        <div class="card-title-group">
+          <div class="card-icon icon-blue"><i class="fa-solid fa-bolt"></i></div>
+          <div><div class="card-title">Market Pulse</div><div class="card-subtitle">Live commodity snapshot · NCR region</div></div>
+        </div>
+      </div>
+      <div class="alert-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <p><strong>AI Alert:</strong> Steel prices expected to rise <strong>6–9%</strong> in next 14 days. Optimal window closing this week.</p>
+      </div>
+      <div class="insights-grid">
+        <div class="insight-tile"><div class="insight-val">₹58,200</div><div class="insight-label">Steel FE500D /MT</div><div class="insight-delta delta-down"><i class="fa-solid fa-arrow-down"></i> ₹1,400 today</div></div>
+        <div class="insight-tile"><div class="insight-val">₹340</div><div class="insight-label">Cement OPC 53 /bag</div><div class="insight-delta delta-up"><i class="fa-solid fa-arrow-up"></i> ₹8 today</div></div>
+        <div class="insight-tile"><div class="insight-val">₹72,500</div><div class="insight-label">SS Pipes /MT</div><div class="insight-delta delta-down"><i class="fa-solid fa-arrow-down"></i> ₹620 today</div></div>
+        <div class="insight-tile"><div class="insight-val">23%</div><div class="insight-label">Avg. Bulk Savings vs MRP</div><div class="insight-delta delta-up"><i class="fa-solid fa-arrow-up"></i> +2% vs last month</div></div>
+      </div>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="stat-card">
+        <div class="stat-card-header"><span class="stat-card-title">Active Commitments</span><div class="card-icon icon-teal" style="width:28px;height:28px;font-size:12px;"><i class="fa-solid fa-handshake"></i></div></div>
+        <div class="commitments-display">
+          <div class="commitments-number" id="commitment-count">0</div>
+          <div class="commitments-meta"><p>pools joined</p><p style="font-weight:600;color:var(--green-ok);font-size:12px;" id="commitment-status"><i class="fa-solid fa-circle-check"></i> All on track</p></div>
+        </div>
+        <div class="commitment-list" id="commitment-list">
+          <div style="font-size:12px;color:var(--text-light);text-align:center;padding:12px;">Join a pool to see your commitments here</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header"><span class="stat-card-title">Total Savings</span><div class="card-icon icon-green" style="width:28px;height:28px;font-size:12px;"><i class="fa-solid fa-piggy-bank"></i></div></div>
+        <div class="savings-amount">₹4.7L <span>↑</span></div>
+        <div class="savings-delta"><i class="fa-solid fa-arrow-trend-up"></i> +₹82,000 this month vs market rate</div>
+        <div class="mini-bar-chart" id="miniBarChart"></div>
+        <div class="mini-bar-legend">
+          <div class="mini-legend-item"><div class="mini-legend-swatch" style="background:var(--grey-200);"></div> Market Price</div>
+          <div class="mini-legend-item"><div class="mini-legend-swatch" style="background:var(--teal-500);"></div> Bulk Price</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header"><span class="stat-card-title">Quality Passports</span><div class="card-icon icon-green" style="width:28px;height:28px;font-size:12px;"><i class="fa-solid fa-shield-halved"></i></div></div>
+        <div class="quality-display"><div class="quality-check-icon"><i class="fa-solid fa-check"></i></div><div class="quality-number">12</div><div class="quality-label">Verified batches this quarter</div></div>
+        <div class="quality-list">
+          <div class="quality-item"><i class="fa-solid fa-circle-check"></i><div><div class="quality-item-text">JSW Steel FE500D — Lot #7721</div><div class="quality-item-sub">BIS Certified · Oct 2025</div></div></div>
+          <div class="quality-item"><i class="fa-solid fa-circle-check"></i><div><div class="quality-item-text">Ultratech OPC 53 — Lot #3349</div><div class="quality-item-sub">ISI Mark · Sep 2025</div></div></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-header"><span class="stat-card-title">Quick Actions</span></div>
+        <div class="quick-actions">
+          <button class="quick-action-btn"><div class="qa-icon-wrap icon-teal"><i class="fa-solid fa-file-invoice"></i></div><div><div class="qa-text">Download Invoice</div><div class="qa-sub">Last 3 pool orders</div></div><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="quick-action-btn"><div class="qa-icon-wrap icon-orange"><i class="fa-solid fa-users-plus"></i></div><div><div class="qa-text">Invite Shopkeeper</div><div class="qa-sub">Earn ₹500 referral bonus</div></div><i class="fa-solid fa-chevron-right"></i></button>
+          <button class="quick-action-btn" onclick="checkApiHealth()"><div class="qa-icon-wrap icon-blue"><i class="fa-solid fa-server"></i></div><div><div class="qa-text">Check API Health</div><div class="qa-sub">Ping backend server</div></div><i class="fa-solid fa-chevron-right"></i></button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check"></i>
+  <span id="toastMsg">Message</span>
+  <button class="toast-close" onclick="hideToast()"><i class="fa-solid fa-xmark"></i></button>
+</div>
+
+<script>
+  /* ══════════════════════════════════════
+     CONFIG — change this if backend moves
+  ══════════════════════════════════════ */
+  const API = 'http://127.0.0.1:8000';
+
+  /* ══════════════════════════════════════
+     TOKEN HELPERS
+  ══════════════════════════════════════ */
+  const getToken  = () => localStorage.getItem('bb_access_token');
+  const setToken  = (t) => localStorage.setItem('bb_access_token', t);
+  const getUser   = () => JSON.parse(localStorage.getItem('bb_user') || 'null');
+  const setUser   = (u) => localStorage.setItem('bb_user', JSON.stringify(u));
+  const clearAuth = () => { localStorage.removeItem('bb_access_token'); localStorage.removeItem('bb_user'); };
+
+  
+  const authHeaders = () => ({
+  'Content-Type': 'application/json',
+  'Authorization': `Bearer ${getToken()}`
+});
+
+/* ✅ ADD THIS RIGHT HERE */
+async function apiFetch(url, opts = {}) {
+  opts.headers = { ...authHeaders(), ...(opts.headers || {}) };
+
+  let r = await fetch(url, opts);
+
+  if (r.status === 401) {
+    const refresh = localStorage.getItem('bb_refresh_token');
+
+    if (refresh) {
+      const rr = await fetch(`${API}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: refresh })
+      });
+
+      if (rr.ok) {
+        const d = await rr.json();
+        setToken(d.access_token);
+
+        opts.headers['Authorization'] = `Bearer ${d.access_token}`;
+        r = await fetch(url, opts);
+      }
+    }
+  }
+
+  return r;
+}
+
+/* API HEALTH CHECK */
+async function checkApiHealth() {
+    try {
+      const r = await fetch(`${API}/docs`, { method: 'HEAD', signal: AbortSignal.timeout(3000) });
+      setApiStatus(true);
+      showToast('Backend is online ✓', 'check');
+    } catch {
+      setApiStatus(false);
+      showToast('Backend offline — start uvicorn', 'xmark');
+    }
+  }
+
+  function setApiStatus(online) {
+    const el = document.getElementById('api-status-badge');
+    el.className = `api-status ${online ? 'online' : 'offline'}`;
+    el.innerHTML = `<div class="api-status-dot"></div> API ${online ? 'Online' : 'Offline'}`;
+  }
+
+  /* ══════════════════════════════════════
+     AUTH
+  ══════════════════════════════════════ */
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+    document.getElementById('login-form').style.display    = tab==='login'    ? 'flex' : 'none';
+    document.getElementById('register-form').style.display = tab==='register' ? 'flex' : 'none';
+    document.getElementById('auth-error').classList.remove('show');
+  }
+
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg; el.classList.add('show');
+  }
+
+  async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  if (!email || !password) return showAuthError('Please fill in all fields');
+
+  const btn = document.querySelector('#login-form .auth-btn');
+  btn.disabled = true;
+  btn.textContent = 'Logging in...';
+
+  try {
+    const r = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Login failed');
+
+    setToken(data.access_token);
+
+    // ✅ ADD THIS
+    if (data.refresh_token)
+      localStorage.setItem('bb_refresh_token', data.refresh_token);
+
+    setUser({ email, display_name: email.split('@')[0] });
+
+    onAuthSuccess();
+
+  } catch(e) {
+    showAuthError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-right-to-bracket"></i> Login';
+  }
+}
+
+  async function doRegister() {
+  const display_name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+
+  if (!display_name || !email || !password)
+    return showAuthError('Please fill in all fields');
+
+  if (password.length < 6)
+    return showAuthError('Password must be at least 6 characters');
+
+  const btn = document.querySelector('#register-form .auth-btn');
+  btn.disabled = true;
+  btn.textContent = 'Creating account...';
+
+  try {
+    const r = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, display_name })
+    });
+
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.detail || 'Registration failed');
+
+    setToken(data.access_token);
+
+    // ✅ ADD THIS
+    if (data.refresh_token)
+      localStorage.setItem('bb_refresh_token', data.refresh_token);
+
+    setUser({ email, display_name });
+
+    onAuthSuccess();
+
+  } catch(e) {
+    showAuthError(e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-user-plus"></i> Create Account';
+  }
+}
+
+  function onAuthSuccess() {
+    const user = getUser();
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.display_name} · Connaught Place, New Delhi`;
+    const initials = user.display_name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('nav-avatar').textContent = initials;
+    setApiStatus(true);
+    showToast(`Welcome, ${user.display_name}! 👋`);
+    loadPoolIds();
+  }
+
+  function doLogout() {
+    clearAuth();
+    joinedPools.clear();
+    updateCommitmentList();
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('nav-avatar').textContent = '?';
+    setApiStatus(false);
+  }
+
+  /* ══════════════════════════════════════
+     POOL JOINING — calls real backend
+  ══════════════════════════════════════ */
+  const joinedPools = new Set();
+  const poolBackendIds = {
+    jsw: null, ultra: null, tata: null   // filled after pools are created in DB
+  };
+  async function loadPoolIds() {
+  try {
+    const r = await apiFetch(`${API}/pools`);
+    const pools = await r.json();
+
+    pools.forEach(p => {
+      const t = p.title.toLowerCase();
+      if (t.includes('jsw'))   poolBackendIds.jsw   = p.id;
+      if (t.includes('ultra')) poolBackendIds.ultra = p.id;
+      if (t.includes('tata'))  poolBackendIds.tata  = p.id;
+    });
+
+    Object.values(poolBackendIds).forEach(id => {
+      if (id) connectWebSocket(id);
+    });
+
+  } catch(e) {
+    console.log('Pool load failed:', e);
+  }
+}
+
+  async function joinPool(btn, poolKey, poolName) {
+    if (!getToken()) { showToast('Please login first', 'xmark'); return; }
+    if (joinedPools.has(poolKey)) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Joining...';
+
+    // If we have a real backend pool ID, call the API
+    const poolId = poolBackendIds[poolKey];
+    if (poolId) {
+      try {
+        const r = await fetch(`${API}/pools/${poolId}/commit`, {
+          method: 'POST',
+          headers: authHeaders(),
+          body: JSON.stringify({ quantity: 1, payment_method_id: 'pm_demo' })
+        });
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.detail || 'Commit failed');
+        showToast(`Committed to ${poolName}! Intent: ${data.payment_intent_id.slice(0,20)}...`);
+      } catch(e) {
+        // If 409 (already committed) treat as joined, else show error
+        if (!e.message.includes('already')) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-plus"></i> Join Pool';
+          showToast(`Error: ${e.message}`, 'xmark');
+          return;
+        }
+      }
+    } else {
+      // Demo mode — no pool in DB yet, just UI update
+      showToast(`Joined ${poolName}! (Demo mode — create pool in DB to activate)`);
+    }
+
+    joinedPools.add(poolKey);
+    btn.innerHTML = '<i class="fa-solid fa-check"></i> Joined!';
+    btn.classList.add('joined');
+    updateCommitmentList();
+  }
+
+  /* ══════════════════════════════════════
+     COMMITMENT SIDEBAR
+  ══════════════════════════════════════ */
+  const poolDetails = {
+    jsw:   { name: 'JSW Steel',       type: '120 MT · TMT Bars',      status: 'active' },
+    ultra: { name: 'Ultratech Cement', type: '50 Bags · OPC 53',       status: 'active' },
+    tata:  { name: 'TATA Structura',   type: '8 MT · Hollow Pipes',    status: 'pending' },
+  };
+
+  function updateCommitmentList() {
+    const count = joinedPools.size;
+    document.getElementById('commitment-count').textContent = count;
+    const list = document.getElementById('commitment-list');
+    if (count === 0) {
+      list.innerHTML = '<div style="font-size:12px;color:var(--text-light);text-align:center;padding:12px;">Join a pool to see your commitments here</div>';
+      return;
+    }
+    list.innerHTML = [...joinedPools].map(key => {
+      const d = poolDetails[key];
+      return `<div class="commitment-item">
+        <div><div class="commitment-name">${d.name}</div><div class="commitment-type">${d.type}</div></div>
+        <span class="commitment-status status-${d.status}">${d.status.charAt(0).toUpperCase()+d.status.slice(1)}</span>
+      </div>`;
+    }).join('');
+  }
+
+  /* ══════════════════════════════════════
+     WEBSOCKET — real-time pool updates
+  ══════════════════════════════════════ */
+  function connectWebSocket(poolId) {
+  const token = getToken();
+  const wsUrl = `ws://127.0.0.1:8000/ws/pools/${poolId}${token ? '?token='+token : ''}`;
+
+  const ws = new WebSocket(wsUrl);
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+
+    if (data.event === 'pool_update') {
+      updatePoolBar(poolId, data.committed_qty, data.moq);
+      showToast(`Pool ${data.progress_pct}% filled`);
+    } 
+    else if (data.event === 'pool_success') {
+      showToast('🎉 MOQ reached!');
+    } 
+    else if (data.event === 'pool_failed') {
+      showToast('Pool failed');
+    }
+  };
+
+  ws.onclose = () => {
+    setTimeout(() => connectWebSocket(poolId), 5000);
+  };
+
+  return ws;
+}
+function updatePoolBar(poolId, qty, moq) {
+  const keyMap = Object.entries(poolBackendIds).find(([k, v]) => v === poolId);
+  if (!keyMap) return;
+
+  const key = keyMap[0];
+  const card = document.getElementById(`pool-${key}`);
+  if (!card) return;
+
+  const pct = Math.min(100, Math.round((qty / moq) * 100));
+
+  card.querySelector('.pool-progress-fill').style.width = pct + '%';
+
+  const labels = card.querySelectorAll('.pool-progress-label strong');
+  if (labels[0]) labels[0].textContent = qty + ' Tons';
+  if (labels[1]) labels[1].textContent = pct + '% Full';
+}
+
+  /* ══════════════════════════════════════
+     MINI BAR CHART
+  ══════════════════════════════════════ */
+  const barData = [
+    {label:'Aug',market:88,bulk:70},{label:'Sep',market:82,bulk:65},
+    {label:'Oct',market:92,bulk:72},{label:'Nov',market:85,bulk:66},
+    {label:'Dec',market:100,bulk:78},{label:'Jan',market:95,bulk:74},
+  ];
+  const barContainer = document.getElementById('miniBarChart');
+  barData.forEach(d => {
+    const g = document.createElement('div'); g.className = 'mini-bar-group';
+    const mh = Math.round(d.market/100*50), bh = Math.round(d.bulk/100*50);
+    g.innerHTML = `<div style="display:flex;gap:2px;align-items:flex-end;height:50px;"><div class="mini-bar bar-market" style="height:${mh}px;flex:1;"></div><div class="mini-bar bar-bulk" style="height:${bh}px;flex:1;"></div></div><div class="mini-bar-label">${d.label}</div>`;
+    barContainer.appendChild(g);
+  });
+
+  /* ══════════════════════════════════════
+     DEMAND CHART
+  ══════════════════════════════════════ */
+  const datasets = {
+    '3m': { labels:['Oct 1','Oct 15','Nov 1','Nov 15','Dec 1','Dec 15','Jan 1','Jan 15','Feb 1','Feb 15','Mar 1','Mar 15'], market:[56200,57100,58500,59200,57800,58100,59400,60200,58900,58200,57600,58200], forecast:[56000,56800,57500,58200,57000,57400,58600,59800,58500,57900,57300,57800] },
+    '6m': { labels:['Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'], market:[54000,55200,56800,58200,57000,58100,59400,58900,58200], forecast:[53800,54900,56400,57800,56600,57700,59000,58600,57800] },
+    '1y': { labels:['Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar'], market:[51000,52400,53800,54000,55200,56800,58200,57000,58100,59400,58900,58200], forecast:[50800,52000,53400,53800,54900,56400,57800,56600,57700,59000,58600,57800] },
+  };
+  const buyWindowPlugin = {
+    id: 'buyWindow',
+    beforeDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      if (!chartArea) return;
+      const ds = chart.config._currentDs || '3m';
+      const [s,e] = ds==='3m'?[7,10]:ds==='6m'?[4,7]:[8,11];
+      const x0 = scales.x.getPixelForValue(s), x1 = scales.x.getPixelForValue(e);
+      ctx.save();
+      const g = ctx.createLinearGradient(x0,0,x1,0);
+      g.addColorStop(0,'rgba(16,185,129,0)'); g.addColorStop(.3,'rgba(16,185,129,.15)');
+      g.addColorStop(.7,'rgba(16,185,129,.15)'); g.addColorStop(1,'rgba(16,185,129,0)');
+      ctx.fillStyle = g; ctx.fillRect(x0, chartArea.top, x1-x0, chartArea.height);
+      ctx.fillStyle='#16a34a'; ctx.font='bold 10px DM Sans,sans-serif'; ctx.textAlign='center';
+      ctx.fillText('OPTIMAL BUY', (x0+x1)/2, chartArea.top+14); ctx.restore();
+    }
+  };
+  Chart.register(buyWindowPlugin);
+  const demandChart = new Chart(document.getElementById('demandChart').getContext('2d'), {
+    type: 'line',
+    data: { labels: datasets['3m'].labels, datasets: [
+      { label:'Market Price (₹/MT)', data: datasets['3m'].market, borderColor:'#6366f1', borderWidth:2.5, pointRadius:3, pointHoverRadius:6, pointBackgroundColor:'#6366f1', fill:false, tension:.4 },
+      { label:'AI Forecast (₹/MT)', data: datasets['3m'].forecast, borderColor:'#22a3a3', borderWidth:2, borderDash:[6,3], pointRadius:2, pointHoverRadius:5, pointBackgroundColor:'#22a3a3', fill:false, tension:.4 }
+    ]},
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'index', intersect:false },
+      plugins:{ legend:{display:false}, tooltip:{ backgroundColor:'#0a2e2e', titleColor:'#4dc8c8', bodyColor:'#d0f0f0', callbacks:{ label:(c)=>` ${c.dataset.label}: ₹${c.raw.toLocaleString('en-IN')}` } } },
+      scales:{
+        x:{ grid:{color:'rgba(0,0,0,.05)'}, ticks:{font:{size:10},color:'#6b8888',maxRotation:0} },
+        y:{ grid:{color:'rgba(0,0,0,.05)'}, ticks:{font:{size:10},color:'#6b8888',callback:(v)=>'₹'+(v/1000).toFixed(0)+'k'}, min:50000, max:63000 }
+      }
+    }
+  });
+  demandChart.config._currentDs = '3m';
+  function switchChart(el, period) {
+    document.querySelectorAll('.chart-pill').forEach(p=>p.classList.remove('active')); el.classList.add('active');
+    const ds = datasets[period];
+    demandChart.data.labels = ds.labels;
+    demandChart.data.datasets[0].data = ds.market;
+    demandChart.data.datasets[1].data = ds.forecast;
+    demandChart.config._currentDs = period;
+    const mn = Math.min(...ds.market,...ds.forecast), mx = Math.max(...ds.market,...ds.forecast);
+    demandChart.options.scales.y.min = Math.floor((mn-2000)/1000)*1000;
+    demandChart.options.scales.y.max = Math.ceil((mx+2000)/1000)*1000;
+    demandChart.update('active');
+  }
+
+  /* ══════════════════════════════════════
+     TOAST
+  ══════════════════════════════════════ */
+  let toastTimer;
+  function showToast(msg, icon='check') {
+    clearTimeout(toastTimer);
+    const toast = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = msg;
+    toast.querySelector('i').className = `fa-solid fa-circle-${icon}`;
+    toast.classList.add('show');
+    toastTimer = setTimeout(hideToast, 4000);
+  }
+  function hideToast() { document.getElementById('toast').classList.remove('show'); }
+
+  /* ══════════════════════════════════════
+     MISC UI
+  ══════════════════════════════════════ */
+  document.getElementById('hamburgerBtn').addEventListener('click', () => document.getElementById('mobileNav').classList.toggle('open'));
+  document.getElementById('refreshBtn').addEventListener('click', function() {
+    this.querySelector('i').style.transform = 'rotate(360deg)';
+    setTimeout(()=>{ this.querySelector('i').style.transform=''; }, 500);
+    checkApiHealth();
+  });
+
+  /* ══════════════════════════════════════
+     INIT — check if already logged in
+  ══════════════════════════════════════ */
+  window.addEventListener('load', () => {
+    if (getToken() && getUser()) {
+      onAuthSuccess();
+      checkApiHealth();
+    }
+    // Enter key on login
+    document.getElementById('login-password').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+    document.getElementById('reg-password').addEventListener('keydown', e => { if(e.key==='Enter') doRegister(); });
+  });
+</script>
+</body>
+</html>
